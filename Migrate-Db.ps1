@@ -76,9 +76,7 @@ function main {
 
     Write-Host "Database '$Database' is at version: $original"
 
-    $migrations = Get-SchemaMigrations $SchemaDir |
-        where { $_.Version -gt $original } |
-        sort -Property Version
+    $migrations = Get-SchemaMigrations $SchemaDir
 
     try {
         Invoke-Migrations $db $migrations
@@ -112,10 +110,8 @@ function Get-SchemaMigrations($Dir) {
 
             @{
                 Path = $_.FullName
-                Version = ($prefix -split '[-_]' | where { $_ }) -join '-'
             }
-        } |
-        sort -Property Version
+        }
 }
 
 function Invoke-Migrations($Database, $Migrations) {
