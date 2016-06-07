@@ -6,8 +6,9 @@
     [String]
     $DatabaseName,
 
+    [parameter(Mandatory=$true)]
     [String]
-    $LoginName = 'Test Login'
+    $LoginName
 )
 
 function main
@@ -27,8 +28,11 @@ function main
     <# The array indices are hardcoded, but can be set in a way similar to
        $tcp and $np: by appending the right @Name=... values #>
 	$tcp.IsEnabled = $true
-	$tcp.IPAddresses[8].IPAddressProperties[0].Value = ''
-	$tcp.IpAddresses[8].IPAddressProperties[1].Value = '1433'
+    ForEach ($ipAddress in $tcp.IPAddresses)
+    {
+        $ipAddress.IPAddressProperties['TcpDynamicPorts'].Value = ''
+        $ipAddress.IPAddressProperties['TcpPort'].Value = '1433'
+    }
 	$tcp.alter()
 
 	$np.IsEnabled = $true
@@ -42,11 +46,48 @@ function main
         Write-Host "$_.Exception.GetType().FullName, $_.Exception.Message" -ForegroundColor Red
     }
 
-	Set-MixedLoginMode -server $server
+	Set-MixedLoginMode -server $Server
     Restart-SQLInstance($Server)
     Create-SqlLogin -server $Server -loginName $LoginName
     $Database = Create-Database -server $Server -dbName $DatabaseName
     Create-DatabaseUser -server $Server -database $Database -userName $LoginName
+    Add-ServerPermissions 
+}
+
+function Add-ServerPermissions()
+{}
+
+function Add-DatabasePermissions()
+{
+    param(
+    [parameter(Mandatory=$true)]
+    [Microsoft.SqlServer.Management.Smo.Database]
+    $database,
+    [parameter(Mandatory=$true)]
+    [String]
+    $loginName
+    )
+
+    $dbuser = $database.Users[$loginName]
+
+    $permissionSet = New-Object Microsoft.SqlServer.Management.Smo.DatabasePermissionSet(
+        [Microsoft.SqlServer.Management.Smo.DatabasePermission]::Alter)
+    $permissionSet.Add(
+        [Microsoft.SqlServer.Management.Smo.DatabasePermission]::CreateTable)
+    $permissionSet.Add(
+        [Microsoft.SqlServer.Management.Smo.DatabasePermission]::Insert)
+    $permissionSet.Add(
+        [Microsoft.SqlServer.Management.Smo.DatabasePermission]::Delete)
+    $permissionSet.Add(
+        [Microsoft.SqlServer.Management.Smo.DatabasePermission]::Update)
+    $permissionSet.Add(
+        [Microsoft.SqlServer.Management.Smo.DatabasePermission]::Select)
+    $permissionSet.Add(
+        [Microsoft.SqlServer.Management.Smo.DatabasePermission]::Connect)
+    $permissionSet.Add(
+        [Microsoft.SqlServer.Management.Smo.DatabasePermission]::References)
+
+    $database.Grant($permissionSet, $dbuser.Name)
 }
 
 function Create-SqlLogin()
@@ -64,7 +105,7 @@ function Create-SqlLogin()
         $password = ''
     )
     $loginNames = $server.Logins
-    if($loginNames[$loginName] -eq $null) {
+    if(-not ($server.Logins.Contains($loginName))) {
         $login = New-Object ('Microsoft.SqlServer.Management.Smo.Login') `
             -ArgumentList $server, $loginName
         $login.LoginType = 'SqlLogin'
@@ -174,4 +215,5 @@ function Load-Assembly($name)
 		}
 	}
 }
+
 main
