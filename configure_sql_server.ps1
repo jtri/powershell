@@ -19,7 +19,7 @@ function main
     New-Object ('Microsoft.SqlServer.Management.Smo.WMI.ManagedComputer') .
 
     $ProtocolUri = 
-    "ManagedComputer[@Name='$env:computername']/ServerInstance[@Name='$Server']/ServerProtocol"
+    "ManagedComputer[@Name='$env:computername']/ServerInstance[@Name='$ServerName']/ServerProtocol"
 
     $tcp = $MachineObject.GetSmoObject($ProtocolUri + "[@Name='Tcp']")
     $np = $MachineObject.GetSmoObject($ProtocolUri + "[@Name='Np']")
@@ -46,7 +46,7 @@ function main
     Restart-SQLInstance($Server)
     Create-SqlLogin -server $Server -loginName $LoginName
     $Database = Create-Database -server $Server -dbName $DatabaseName
-    Create-DatabaseUser -server $Server -databse $Database -userName $LoginName
+    Create-DatabaseUser -server $Server -database $Database -userName $LoginName
 }
 
 function Create-SqlLogin()
@@ -174,3 +174,4 @@ function Load-Assembly($name)
 		}
 	}
 }
+main
