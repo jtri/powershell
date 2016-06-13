@@ -1,7 +1,7 @@
 param(
-  [$String]
+  [String]
   $DatabaseName,
-  [$String]
+  [String]
   $LoginName
 )
 

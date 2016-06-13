@@ -1,4 +1,0 @@
-Function Load-Assembly
-{
-
-}
