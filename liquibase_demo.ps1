@@ -22,7 +22,11 @@ function main
 
 		[parameter(mandatory=$true)]
 		[String]
-		$directory,
+		$dirSqlScripts,
+
+		[parameter(mandatory=$true)]
+		[String]
+		$dirMigrationTools,
 		
 		[String]
 		$password = ''
@@ -49,9 +53,9 @@ function main
 	Write-Host 'Adding databse permissions'
 	Add-DatabasePermissions -database $database -loginName $loginName
 
-	Change-UseStatement -Directory $directory -replaceWith $databaseName
+	Change-UseStatement -Directory $dirSqlScripts -replaceWith $databaseName
 
-	Replace-Placeholder -directory 'C:\Developer\Projects\migrations' -database $databaseName -password "" -username $loginName
+	Replace-Placeholder -directory $dirMigrationTools -database $databaseName -password "" -username $loginName
 
 	$liquibaseMetadataTableName = 'DATABASECHANGELOG'
 
